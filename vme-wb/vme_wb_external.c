@@ -342,7 +342,7 @@ void vme_setup_csr_fa0(void *base, u32 wb_vme, unsigned vector, unsigned level)
 	fa[0] = (wb_add >> 24) & 0xFF;
 	fa[1] = (wb_add >> 16) & 0xFF;
 	fa[2] = (wb_add >> 8) & 0xFF;
-	fa[3] = (VME_A32_USER_MBLT & 0x3F) << 2;	/* or VME_A32_USER_DATA_SCT */
+	fa[3] = (VME_A32_USER_DATA_SCT & 0x3F) << 2;	/* or VME_A32_USER_DATA_SCT */
 
 	vme_csr_write(fa[0], base, FUN0ADER);
 	vme_csr_write(fa[1], base, FUN0ADER + 4);
@@ -353,7 +353,7 @@ void vme_setup_csr_fa0(void *base, u32 wb_vme, unsigned vector, unsigned level)
 	fa[0] = (wb_ctrl_add >> 24) & 0xFF;
 	fa[1] = (wb_ctrl_add >> 16) & 0xFF;
 	fa[2] = (wb_ctrl_add >> 8) & 0xFF;
-	fa[3] = (VME_A24_USER_MBLT & 0x3F) << 2;	/* or VME_A24_USER_DATA_SCT */
+	fa[3] = (VME_A24_USER_DATA_SCT & 0x3F) << 2;	/* or VME_A24_USER_DATA_SCT */
 
 	vme_csr_write(fa[0], base, FUN1ADER);
 	vme_csr_write(fa[1], base, FUN1ADER + 4);
@@ -372,7 +372,7 @@ static int vme_remove(struct device *pdev, unsigned int ndev)
 	vme_unmap_window(dev, MAP_REG);
 	vme_unmap_window(dev, MAP_CTRL);
 	wishbone_unregister(&dev->wb);
-	vme_free_irq(vector_num);
+	vme_free_irq(dev->vme_res.vector);
 	kfree(dev);
 
 	dev_info(pdev, "removed\n");
@@ -485,7 +485,7 @@ static int vme_probe(struct device *pdev, unsigned int ndev)
 	}
 
 	/* register interrupt handler */
-	if (vme_request_irq(vector_num, irq_handler, dev, "wb_irq") != 0) {
+	if (vme_request_irq(dev->vme_res.vector, irq_handler, dev, "wb_irq") != 0) {
 		printk(KERN_ALERT VME_WB
 		       ": could not register interrupt handler\n");
 		goto fail_irq;
@@ -496,7 +496,7 @@ static int vme_probe(struct device *pdev, unsigned int ndev)
 	return 0;
 
 fail_irq: {
-	vme_free_irq(vector_num);
+	vme_free_irq(dev->vme_res.vector);
 	vme_unmap_window(dev, MAP_REG);
 	vme_unmap_window(dev, MAP_CR_CSR);
           }
