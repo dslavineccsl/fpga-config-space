@@ -43,7 +43,7 @@
 #define API 8
 #endif
 
-#if API <= 7
+#if API <= 8
 
 static const struct usb_device_id id_table[] = {
 	{ USB_DEVICE_AND_INTERFACE_INFO(0x1D50, 0x6062, 0xFF, 0xFF, 0xFF) },
