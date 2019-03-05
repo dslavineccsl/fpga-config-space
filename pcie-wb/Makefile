@@ -3,7 +3,7 @@ ifneq ($(KERNELRELEASE),)
 
 ccflags-y += -DGIT_REVISION="$(shell git --git-dir=$(src)/../.git log -n1 --pretty='format:%h (%ci)')"
 
-obj-m += pcie_wb.o wishbone.o spec_wb.o
+obj-m += pcie_wb.o wishbone.o
 # Only build wishbone-serial if it was missing
 ifneq ($(CONFIG_USB_SERIAL_WISHBONE),m)
 ifneq ($(CONFIG_USB_SERIAL_WISHBONE),y)
