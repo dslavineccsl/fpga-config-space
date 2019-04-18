@@ -53,6 +53,12 @@ struct wishbone_operations
 	/* slave operations */
 	int (*request)(struct wishbone *wb, struct wishbone_request*); /* 1=record filled, 0=none pending. re-enable non-MSI interrupts. */
 	void (*reply)(struct wishbone *wb, int err, wb_data_t dat);
+  
+	void (*write_ebs)(struct wishbone *wb, wb_addr_t addr, wb_data_t data);
+	wb_data_t (*read_ebs)(struct wishbone *wb, wb_addr_t addr);
+  void (*cycle_ebs)(struct wishbone *wb, int on);
+//  void (*wb_set_num_of_cycle_ops)(struct wishbone *wb, wb_data_t data);
+  
 };
 
 /* One per wishbone backend hardware */
@@ -124,7 +130,12 @@ struct etherbone_master_context
 int wishbone_register(struct wishbone* wb);
 int wishbone_unregister(struct wishbone* wb); /* disable interrupts before calling this */
 
+int wishbone_register_ebs(struct wishbone* wb);
+int wishbone_unregister_ebs(struct wishbone* wb); /* disable interrupts before calling this */
+
+
 /* call when device has data pending. disable non-MSI interrupt generation before calling. */
 void wishbone_slave_ready(struct wishbone* wb);
+void wishbone_slave_ready_ebs(struct wishbone* wb);
 
 #endif

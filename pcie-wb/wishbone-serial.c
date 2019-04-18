@@ -19,6 +19,7 @@
 #include <linux/uaccess.h>
 #include <linux/version.h>
 
+
 #define GSI_VENDOR_OPENCLOSE 0xB0
 
 #if   LINUX_VERSION_CODE == KERNEL_VERSION(2,6,26)
@@ -27,7 +28,7 @@
 #define API 2 /* v2.6.32 v2.6.33 v2.6.34 v2.6.35 v2.6.36 v2.6.37 v2.6.38 v2.6.39 */
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0) && LINUX_VERSION_CODE < KERNEL_VERSION(3,2,0)
 #define API 3 /* v3.0 v3.1 */
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,0) && LINUX_VERSION_CODE < KERNEL_VERSION(3,4,0)
+#elif LINUX_VERSION_COD//#define DBG_PRINT_ENE >= KERNEL_VERSION(3,2,0) && LINUX_VERSION_CODE < KERNEL_VERSION(3,4,0)
 #define API 4 /* v3.2 v3.3 */
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0) && LINUX_VERSION_CODE < KERNEL_VERSION(3,5,0)
 #define API 5 /* v3.4 */
@@ -43,7 +44,16 @@
 #define API 8
 #endif
 
+#define DBG_PRINT_EN
+
+
 #if API <= 8
+
+#define WB_USB_KO "wishbone-serial"
+
+
+
+static unsigned int debug     = 1; /* module parameter, enable debug prints */
 
 static const struct usb_device_id id_table[] = {
 	{ USB_DEVICE_AND_INTERFACE_INFO(0x1D50, 0x6062, 0xFF, 0xFF, 0xFF) },
@@ -60,6 +70,10 @@ MODULE_DEVICE_TABLE(usb, id_table);
 static int usb_gsi_openclose(struct usb_serial_port *port, int value)
 {
 	struct usb_device *dev = port->serial->dev;
+  
+#ifdef DBG_PRINT_EN  
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s - cycle %s\n", __FUNCTION__, value ? "open" : "close");
+#endif
 
 	return usb_control_msg(
 		dev,
@@ -86,6 +100,10 @@ static void wishbone_serial_init_termios(struct tty_struct *tty)
 	struct ktermios *termios = &tty->termios;
 #endif
 
+#ifdef DBG_PRINT_EN
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s\n", __FUNCTION__);
+#endif
+  
 	/*
 	 * The empeg-car player wants these particular tty settings.
 	 * You could, for example, change the baud rate, however the
@@ -138,6 +156,10 @@ static int wishbone_serial_open(struct tty_struct *tty, struct usb_serial_port *
 #endif
 {
 	int retval;
+  
+#ifdef DBG_PRINT_EN  
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s\n", __FUNCTION__);
+#endif
 
 	retval = usb_gsi_openclose(port, 1);
 	if (retval) {
@@ -148,12 +170,21 @@ static int wishbone_serial_open(struct tty_struct *tty, struct usb_serial_port *
 	}
 
 #if API <= 1
+#ifdef DBG_PRINT_EN
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s: wishbone_serial_set_termios(port=%x, NULL)\n", __FUNCTION__, port);
 	wishbone_serial_set_termios(port, NULL);
+#endif  
 #endif
 
 #if API <= 1
+#ifdef DBG_PRINT_EN
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s: usb_serial_generic_open(port=%x, filp=%x)\n", __FUNCTION__, port, filp);
+#endif  
 	retval = usb_serial_generic_open(port, filp);
 #else /* API >= 2 */
+#ifdef DBG_PRINT_EN
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s: wishbone_serial_set_termios(tty=%x, port=%x)\n", __FUNCTION__, tty, port);
+#endif  
 	retval = usb_serial_generic_open(tty, port);
 #endif
 	if (retval)
@@ -168,6 +199,10 @@ static void wishbone_serial_close(struct usb_serial_port *port, struct file *fil
 static void wishbone_serial_close(struct usb_serial_port *port)
 #endif
 {
+#ifdef DBG_PRINT_EN  
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s\n", __FUNCTION__);
+#endif
+  
 #if API <= 2
 	usb_kill_urb(port->write_urb);
 	usb_kill_urb(port->read_urb);
@@ -213,10 +248,14 @@ static struct usb_serial_driver wishbone_serial_device = {
 static int __init wishbone_serial_init(void)
 {
 	int retval;
+  
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s API=%d\n", __FUNCTION__, API);
 
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s : registering wishbone_serial_device\n", __FUNCTION__);
 	retval = usb_serial_register(&wishbone_serial_device);
 	if (retval)
 		return retval;
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s : registering wisbone_serial_driver\n", __FUNCTION__);
 	retval = usb_register(&wishbone_serial_driver);
 	if (retval)
 		usb_serial_deregister(&wishbone_serial_device);
@@ -225,7 +264,10 @@ static int __init wishbone_serial_init(void)
 
 static void __exit wishbone_serial_exit(void)
 {
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s: deregistering wishbone_serial_driver\n", __FUNCTION__);
 	usb_deregister(&wishbone_serial_driver);
+  
+  if (unlikely(debug)) printk(KERN_DEBUG WB_USB_KO ": %s: deregistering wishbone_serial_device\n", __FUNCTION__);
 	usb_serial_deregister(&wishbone_serial_device);
 }
 
@@ -246,7 +288,10 @@ module_usb_serial_driver(serial_drivers, id_table);
 
 #endif
 
-MODULE_AUTHOR("Wesley W. Terpstra <w.terpstra@gsi.de>");
+module_param(debug, int, 0644);
+MODULE_PARM_DESC(debug, "Enable debugging information");
+
+MODULE_AUTHOR("Wesley W. Terpstra <w.terpstra@gsi.de> X");
 MODULE_DESCRIPTION("USB Wishbone-Serial adapter");
 MODULE_LICENSE("GPL");
 

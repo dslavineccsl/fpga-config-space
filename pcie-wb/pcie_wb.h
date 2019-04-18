@@ -20,12 +20,26 @@
 #define SDWB_ADDRESS_LOW      28
 #define PMC_IRQ_CONTROL       32
 
+#define CYCLE_TIMEOUT_CONTROL 0x24
+#define CYCLE_TIMEOUT_MAX     0x28
+
 #define MASTER_CTL_HIGH 64
 #define MASTER_CTL_LOW  68
 #define MASTER_ADR_HIGH 72
 #define MASTER_ADR_LOW  76
 #define MASTER_DAT_HIGH 80
 #define MASTER_DAT_LOW  84
+
+// register and FIFO addresses in PCI EB slave BAR
+#define EB_SLAVE_CFG_REG_CYCLE  0x80 //  96
+#define EB_SLAVE_CFG_REG_STATUS 0x84 // 
+
+#define EB_SLAVE_CYLE_TOUT_MAX  0x88 //
+#define EB_SLAVE_TX_DATA_COUNT  0x8C //
+#define EB_SLAVE_SCRATCH        0x9C //
+
+#define EB_RX_FIFO_DATA         0xA0 //
+#define EB_TX_FIFO_DATA         0xB0 //
 
 #define WINDOW_HIGH	0xFFFF0000UL
 #define WINDOW_LOW	0x0000FFFCUL
@@ -54,6 +68,7 @@ struct pcie_wb_dev {
 	int    msi;
 
 	struct wishbone wb;
+//  struct wishbone wb_ebs;
 	unsigned int window_offset;
 	unsigned int low_addr, width, shift;
 };
