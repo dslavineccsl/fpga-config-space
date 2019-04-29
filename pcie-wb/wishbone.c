@@ -763,11 +763,9 @@ static void etherbone_master_process_ebs(struct etherbone_master_context* contex
 #endif
       }
 
-            context->state = idle;
 #if DBG_PRINT_LVL > 3  
         if (unlikely(debug)) printk(KERN_DEBUG WB_NAME ": %s: Unlocking device mutex\n", __FUNCTION__);  
 #endif
-//      wops->cycle_ebs(wb, 0); // closing cycle in char_master_release
             mutex_unlock(&wb->device_mutex);
 
 #if DBG_PRINT_LVL > -1  
@@ -858,13 +856,15 @@ static int char_master_release(struct inode *inode, struct file *filep)
     /* Did the bad user forget to drop the cycle line? */
     //if (context->state == cycle) {
       mutex_lock(&context->context_mutex);
+      context->state = idle;    
+      
       mutex_lock(&wb->device_mutex);
       if (selebslv){
         wb->wops->cycle_ebs(wb, 0);
       }else{
         wb->wops->cycle(wb, 0);
       }
-      context->state = idle;    
+
       mutex_unlock(&wb->device_mutex);
       mutex_unlock(&context->context_mutex);
     //}
